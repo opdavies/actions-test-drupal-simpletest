@@ -13,7 +13,7 @@ final class ExampleTest extends \DrupalWebTestCase {
   }
 
   public function testThatItReturnsTrue(): void {
-    $this->assertTrue(FALSE);
+    $this->assertTrue(TRUE);
   }
 
 }
