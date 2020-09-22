@@ -1,0 +1,53 @@
+---
+name: CI
+
+on:
+  pull_request:
+  push:
+
+jobs:
+  run-tests:
+    runs-on: ubuntu-latest
+
+    name: Run Simpletest tests
+
+    strategy:
+      matrix:
+        php-version: [7.3]
+
+    steps:
+      - name: Checkout the code
+        uses: actions/checkout@v2
+
+      - name: Cache dependencies
+        uses: actions/cache@v1
+        with:
+          path: |
+            ~/.composer/cache/files
+            vendor
+          key: dependencies-composer-${{ hashFiles('composer.json') }}
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, sqlite, pdo_sqlite
+          coverage: none
+
+      - name: Install dependencies
+        run: composer install --prefer-dist --no-interaction --no-suggest
+
+      - name: Install Drupal
+        run: >
+          vendor/bin/drush site-install -y
+          --db-url=sqlite://sites/default/files/.ht.sqlite
+
+      - name: Enable the Simpletest module
+        run: vendor/bin/drush pm-enable -y simpletest
+
+      - name: Run tests
+        run: >
+          php scripts/run-tests.sh
+          --verbose
+          --color
+          --directory sites/all/modules/custom
